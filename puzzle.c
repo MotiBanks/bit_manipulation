@@ -20,13 +20,13 @@ int logicalShift(int x, int n) {
 
 int bitCount(int x) {
    
-    return 0;
+    return x & 0x3f;
 }
 
 
 int bang(int x) {
     
-    return 0;
+    return ((x | -x) >> 31) + 1 ;
 }
 
 
