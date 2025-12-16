@@ -44,7 +44,7 @@ int fitsBits(int x, int n) {
 
 int divpwr2(int x, int n) {
     
-    return 0;
+    return (x + ((x >> 31) & ((1 << n) - 1))) >> n;
 }
 
 

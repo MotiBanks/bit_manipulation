@@ -598,7 +598,7 @@ return  1 << 31;
 
 # **Puzzle 7 - `fitsBits`**
 **Goal:** Return 1 if x fits in n-bit signed integer, else 0   
-**Allowed ops:** << , >>
+**Allowed ops:** +, << , >>
 
 
 
@@ -712,4 +712,93 @@ Your first thought should be:
 ## **✅Final result**
 ```c
 return (x << (32 - n)) >> (32 - n) == x;
+```
+
+
+
+---
+
+
+# **Puzzle 8 - `divpwr2`**
+**Goal:** Compute x / (2^n), rounding toward zero, handle negatives correctly.  
+**Allowed ops:** 
+
+
+## **What the question is actually asking?**
+
+>Compute x / (2^n), rounding toward zero, handle negatives correctly.
+
+Break it down literally:
+
+1. We want division by a power of 2.
+
+2. We want round toward zero, not toward negative infinity.
+
+3. We have to handle negative numbers properly.
+
+
+## **The mechanics of division by powers of 2**
+
+In two’s complement:
+
+- Dividing by `2^n` is usually the same as **arithmetic right shift by `n`**:
+    
+
+`x / 2^n  ≈  x >> n`
+
+Why?
+
+- Right shift moves bits right.
+    
+- Arithmetic shift copies the sign bit → preserves negative numbers approximately.
+
+
+## **The catch - rounding toward zero**
+
+Rule of thumb:
+
+- Arithmetic right shift always rounds **toward negative infinity**, because negative numbers keep the sign bit.
+    
+```c
+Example, `x = -5, n = 1`:
+
+-5 / 2 = -2.5 
+
+Shift: -5 >> 1 = -3   // rounds down, toward -∞, not 0
+```
+
+- But the puzzle wants **round toward 0**, i.e., -2 for -5 / 2.
+    
+
+So **we need a “bias”** for negatives.
+
+
+## **How do we apply a bias mechanically??**
+
+Mechanically:
+
+1. Determine if `x` is negative:
+    
+    - `(x >> 31)` gives `0` for positive, `-1` for negative in two’s complement.
+        
+2. If negative, **add a bias** before shifting to correct the rounding:
+    
+
+`bias = (1 << n) - 1`
+
+3. Then:
+    
+
+`(x + bias_for_negatives) >> n`
+
+- Positive numbers → bias = 0 → shift normally ie `(x >> 31)`
+    
+- Negative numbers → bias = `(1 << n) - 1` → cancels the downward rounding, effectively rounding toward zero
+
+
+
+## **✅Final result**
+```c
+int bias = (x >> 31) & ((1 << n) - 1);
+    return (x + bias) >> n;
 ```
