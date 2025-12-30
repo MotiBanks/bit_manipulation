@@ -67,8 +67,14 @@ int isLessOrEqual(int x, int y) {
 
 
 int ilog2(int x) {
-  
-    return 0;
+    int result = 0;
+    if (x >> 16) { x >>= 16; result += 16; }
+    if (x >> 8)  { x >>= 8;  result += 8;  }
+    if (x >> 4)  { x >>= 4;  result += 4;  }
+    if (x >> 2)  { x >>= 2;  result += 2;  }
+    if (x >> 1)  { result += 1; }
+   
+    return result;
 }
 
 /******** FLOATING POINT PUZZLES *********/

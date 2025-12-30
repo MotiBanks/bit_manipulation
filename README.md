@@ -1074,3 +1074,304 @@ Using only bit operations, “non-negative” can be checked by the **sign bit**
 ```c
     return !( (y + (~x + 1)) >> 31 );
 ```
+
+
+
+---
+
+
+
+# Puzzle 12 - ilog2
+
+**Goal:** Return floor(log2(x))  
+**Allowed ops:** >>
+
+I see floor(log2(x))
+
+## First question I ask is : What is this problem asking me in to do in plain english?
+
+log2(x) -> `Is saying how many times can i divide x by 2, before it becomes smaller than 1`
+
+
+## Now how do i represent this idea in binary?
+
+To represent this idea in binary ,first we must know how binary numbers work?
+
+## How Binary numbers work?
+
+- Each position is a power of 2
+    
+- Moving **right** removes one power of 2
+    
+- Removing one power of 2 is exactly the same as **dividing by 2**
+
+
+
+## So now we know this we think about our first question again and reinterpret it:
+
+`How many times can i divide x by 2, before it becomes smaller than 1`
+
+what this  will mean in binary would be
+
+`How many bits can I remove from the right before `**only one bit**` remains?`
+
+
+
+
+Since one bit must remain, you stop removing bits when you reach `1`, so one bit is always left behind.
+
+SO: 
+
+- The problem means  
+    “How many times can I divide `x` by 2 before I reach 1.”
+    
+- In binary, dividing by 2 means  
+    “Remove one bit from the right.”
+    
+- The process stops at `1`, so  
+    “You remove all bits _except_ the last one.”
+
+
+
+## The new question would be:
+
+> **“How do I _count_ those removals using only bit operations, efficiently?”**
+
+
+The hint says:
+
+> “Use binary search with shifts”
+
+That means:
+
+> “Don’t remove bits one by one. Remove _chunks_ of bits at a time.”
+
+Why?
+
+Because instead of asking:
+
+- “Can I divide by 2 one more time?”
+    
+
+I ask:
+
+- “Can I divide by 2¹⁶?”
+    
+- “Can I divide by 2⁸?”
+    
+- “Can I divide by 2⁴?”
+
+
+## Why this works conceptually (no code yet)
+
+
+Remember what you’re counting:
+
+> How many bits can I remove before reaching 1?
+
+Instead of removing bits one at a time, you ask:
+
+- “Are there at least 16 removable bits?”
+    
+- If yes → remove them all at once
+    
+- Then repeat with smaller chunks
+
+This is exactly how binary search works:
+
+- Big jump first
+    
+- Then smaller refinements
+
+
+You want to count removals **efficiently**.
+
+Instead of removing bits one at a time, you do this:
+
+## The procedure
+
+- Start with a counter `result = 0`
+    
+- Look at `x`
+    
+- Ask **big questions first**:
+    
+    - “Can I remove 16 bits at once?”
+        
+    - If yes:
+        
+        - remove them (shift right by 16)
+            
+        - add 16 to `result`
+            
+- Then ask smaller questions:
+    
+    - “Can I remove 8 bits?”
+        
+    - Then 4
+        
+    - Then 2
+        
+    - Then 1
+        
+
+Each time:
+
+- If the answer is “yes”, you:
+    
+    - shift
+        
+    - add to the count
+        
+
+You stop when you can’t remove any more bits without destroying the final `1`
+
+
+Let’s take one question:
+
+> “Can I remove 16 bits?”
+
+In binary, that means:
+
+> “Is there **anything** left after shifting right by 16?”
+
+So you check:
+
+`x >> 16`
+
+- If this is **non-zero**, then: (non-zero means the value is not 0)
+    
+    - the number has **more than 16 bits**
+        
+    - removing 16 bits is safe
+        
+- If it is zero:
+    
+    - removing 16 bits would destroy the last `1`
+        
+    - you don’t do it
+      
+
+## An Example, If the value of x is given : x= 32
+
+We start with:
+
+`x = 32`  
+`binary: 100000`  
+`result = 0`
+
+---
+
+### Step 1: Can we remove 16 bits?
+
+`x >> 16 = 0   → no`
+
+Nothing changes. `x` is still 32. `result` is still 0.
+
+---
+
+### Step 2: Can we remove 8 bits?
+
+`x >> 8 = 0   → no`
+
+Still nothing changes. `x` = 32, `result` = 0.
+
+---
+
+### Step 3: Can we remove 4 bits?
+
+`x >> 4 = 2   → yes`
+
+Now we **do the shift**:
+
+`x = x >> 4 = 2`   (binary: 10) 
+`result += 4 → result = 4`
+
+
+```C
+The shortcut to remember
+
+Right shift by k bits = integer divide by 2ᵏ
+
+`x >> k` → same as `x / (2^k)` (integer division)
+
+x = 32
+k = 4
+x >> 4 = 32 / 16 = 2
+binary: 10
+
+```
+
+✅ Important: `x` **changes here** because we actually performed the shift.
+
+---
+
+### Step 4: Can we remove 2 bits?
+
+`x >> 2 = 0   → no`
+
+Check fails. `x` stays **2**, `result` stays **4**.
+
+---
+
+### Step 5: Can we remove 1 bit?
+
+`x >> 1 = 1   → yes`
+
+Now we shift **again**:
+
+`x = x >> 1 = 1 result += 1 → result = 5`
+
+---
+
+### Final values
+
+`x = 1`   (binary: 1)   
+`result = 5`
+
+This matches `ilog2(32) = 5`, because 2⁵ = 32.
+
+
+We return the result, not the value of x.  
+`return result;`
+
+
+## Solve, without being given the value of x
+
+So we were not given the value of X;
+
+We need a checker
+
+### How the “checker” works
+
+Each line is like:
+
+`if (x >> k) { ... }`
+
+it is literally means:
+
+- “Shift x right by k bits” → temporarily see what remains
+    
+- If the result is **non-zero**, that means x has **enough bits** to remove k bits safely
+    
+- If the result is **zero**, x is too small → skip this chunk
+
+
+## ✅ Final result
+
+```c
+int ilog2(int x) {
+    int result = 0;
+    if (x >> 16) { x >>= 16; result += 16; }
+    if (x >> 8)  { x >>= 8;  result += 8;  }
+    if (x >> 4)  { x >>= 4;  result += 4;  }
+    if (x >> 2)  { x >>= 2;  result += 2;  }
+    if (x >> 1)  { result += 1; }
+    return result;
+}
+
+```
+
+
+
+---
